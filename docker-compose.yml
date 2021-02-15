@@ -1,0 +1,30 @@
+version: "3"
+
+services: 
+  back-end:
+    restart: always
+    build: ./server
+    command: pm2-runtime npm -- start
+    environment: 
+      - MONGO_URI=${MONGO_URI}
+      - KEY1=${KEY1}
+      - KEY2=${KEY2}
+      - NODE_ENV=${NODE_ENV}
+      - PM2_PUBLIC_KEY=${PM2_PUBLIC_KEY}
+      - PM2_SECRET_KEY=${PM2_SECRET_KEY}
+
+      - USERNAME=${USERNAME}
+      - PASSWORD=${PASSWORD}
+
+      - PARTNER_API_ENDPOINT=${PARTNER_API_ENDPOINT}
+      - OP_TIGER_API_ENDPOINT=${OP_TIGER_API_ENDPOINT}
+    ports: 
+      - 3000:3000
+    volumes: 
+      - ./server:/app
+    networks:
+      - local
+
+networks:
+  local:
+    driver: bridge
