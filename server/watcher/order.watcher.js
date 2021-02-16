@@ -6,7 +6,6 @@ const {codes} = require('iso-country-codes')
 
 const {
     formatOrder,
-    getConsoleLog,
     checkOrderValidity
 } = require('../utils/utils');
 

@@ -81,7 +81,7 @@ db.on('open', async () => {
                 const missingProperties = checkOrderValidity(order.orderData)
 
                 if(missingProperties.length > 0) {
-                    logger.error("Missing required properties", ermissingPropertiesr)
+                    logger.error("Missing required properties", missingProperties)
                 }
 
                 postOrder(order, missingProperties)
