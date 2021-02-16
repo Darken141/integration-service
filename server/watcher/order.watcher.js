@@ -36,7 +36,7 @@ Order.watch().on("change", async (data) => {
             const missingProperties = checkOrderValidity(orderToSend)
 
             if(missingProperties.length > 0) {
-                logger.error("Missing required properties", ermissingPropertiesr)
+                logger.error("Missing required properties", missingProperties)
             }
 
             await Order.updateOne({ _id: data.fullDocument._id}, {
