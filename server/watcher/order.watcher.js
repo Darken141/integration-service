@@ -19,26 +19,26 @@ const {
 Order.watch().on("change", async (data) => {
     // New order come
     if(data.operationType === 'insert') {
-        logger.info("Get new order")
-        const {carrierCodes} = await CarrierCode.findOne()
-        // Parse data from database
-        const orderData = JSON.parse(data.fullDocument.originalOrderData)
-        // Get resources from dataObj
-        const orderDetails = JSON.parse(orderData.resources[0].body.text)
-        // Find Country code
-        const countryObj = codes.find(code => code.name === orderDetails.country)
-        // Check carrier codes
-        const matches = stringSimilarity.findBestMatch(orderDetails.carrierKey, Object.keys(carrierCodes))
-        // Fill orderObj before send
-        const orderToSend = formatOrder(orderDetails, data.fullDocument._id, matches, countryObj)
-        // Check if have all required properties
-        const missingProperties = checkOrderValidity(orderToSend)
-
-        if(missingProperties.length > 0) {
-            logger.error("Missing required properties", ermissingPropertiesr)
-        }
-
         try {
+            logger.info("Get new order")
+            const {carrierCodes} = await CarrierCode.findOne()
+            // Parse data from database
+            const orderData = JSON.parse(data.fullDocument.originalOrderData)
+            // Get resources from dataObj
+            const orderDetails = JSON.parse(orderData.resources[0].body.text)
+            // Find Country code
+            const countryObj = codes.find(code => code.name === orderDetails.country)
+            // Check carrier codes
+            const matches = stringSimilarity.findBestMatch(orderDetails.carrierKey, Object.keys(carrierCodes))
+            // Fill orderObj before send
+            const orderToSend = formatOrder(orderDetails, data.fullDocument._id, matches, countryObj)
+            // Check if have all required properties
+            const missingProperties = checkOrderValidity(orderToSend)
+
+            if(missingProperties.length > 0) {
+                logger.error("Missing required properties", ermissingPropertiesr)
+            }
+
             await Order.updateOne({ _id: data.fullDocument._id}, {
                 status: "updated",
                 orderData: orderToSend,

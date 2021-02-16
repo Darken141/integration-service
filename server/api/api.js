@@ -2,7 +2,6 @@ const fetch = require('node-fetch')
 const Order = require('../models/orders')
 const logger = require('../config/winston-logger')
 const {
-    getConsoleLog,
     getBase64Hash
 } = require('../utils/utils')
 
@@ -16,18 +15,22 @@ const getOrderStatus = async (orderId, checkOrderStatusInterval) => {
         redirect: 'follow'
     };
 
-    const response = await fetch(`${process.env.OP_TIGER_API_ENDPOINT}/api/orders/${orderId}/state`, requestOptions)
+    try {
+        const response = await fetch(`${process.env.OP_TIGER_API_ENDPOINT}/api/orders/${orderId}/state`, requestOptions)
 
-    if(response.status === 200) {
-        const orderState = await response.json()
-        logger.info(orderState)
+        if(response.status === 200) {
+            const orderState = await response.json()
+            logger.info(orderState)
 
-        // When order is done, update status in database
-        if(orderState.State === 'Finished') {
-            await Order.updateOne({ _id: orderState.OrderID}, {status: "Finished"})
-            logger.info(`Order: ${orderState.OrderID} is finished`)
-            clearInterval(checkOrderStatusInterval)
+            // When order is done, update status in database
+            if(orderState.State === 'Finished') {
+                await Order.updateOne({ _id: orderState.OrderID}, {status: "Finished"})
+                logger.info(`Order: ${orderState.OrderID} is finished`)
+                clearInterval(checkOrderStatusInterval)
+            }
         }
+    } catch (err) {
+        logger.error("SERVER ERROR", err)
     }
 }
 
@@ -43,25 +46,30 @@ const postOrder = async (order, missingProperties) => {
         redirect: 'follow'
     };
 
-    // Send Order
-    const response = await fetch(`${process.env.OP_TIGER_API_ENDPOINT}/api/orders`, requestOptions)
+    try{
+        // Send Order
+        const response = await fetch(`${process.env.OP_TIGER_API_ENDPOINT}/api/orders`, requestOptions)
 
-    // Is everything oK?
-    if(response.status === 200) {
-        await Order.updateOne({ _id: order._id}, {
-            status: "sended",
-            orderData: order.orderData,
-            missingProperties: missingProperties,
-        })
-        logger.info(`Order: ${order._id} is sended`)
-    } else {
-        await Order.updateOne({ _id: order._id}, { 
-            status: "pending",
-            missingProperties: missingProperties,
-            orderData: order.orderData
-        })
-        logger.info(`Order: ${order._id} failed`)
+        // Is everything oK?
+        if(response.status === 200) {
+            await Order.updateOne({ _id: order._id}, {
+                status: "sended",
+                orderData: order.orderData,
+                missingProperties: missingProperties,
+            })
+            logger.info(`Order: ${order._id} is sended`)
+        } else {
+            await Order.updateOne({ _id: order._id}, { 
+                status: "pending",
+                missingProperties: missingProperties,
+                orderData: order.orderData
+            })
+            logger.info(`Order: ${order._id} failed`)
+        }
+    } catch (err) {
+        logger.error("SERVER ERROR", err)
     }
+
 }
 
 const patchOrder = async (order, status, updateOrderStatusInterval) => {
@@ -78,16 +86,21 @@ const patchOrder = async (order, status, updateOrderStatusInterval) => {
         redirect: 'follow'
     };
 
-    const response = await fetch(`${process.env.PARTNER_API_ENDPOINT}/api/orders/${order.orderID}`, requestOptions)
+    try {
+        const response = await fetch(`${process.env.PARTNER_API_ENDPOINT}/api/orders/${order.orderID}`, requestOptions)
 
-    // Update status when order state is successuly sended
-    if(response.status === 200) {
-        await Order.updateOne({ _id: order._id}, {status: "Completed"})
-        logger.info(`Order ${order._id} is completed`)
-        clearInterval(updateOrderStatusInterval)
-    } else {
-        logger.error(`Order: ${order._id} doesnt update state`)
+        // Update status when order state is successuly sended
+        if(response.status === 200) {
+            await Order.updateOne({ _id: order._id}, {status: "Completed"})
+            logger.info(`Order ${order._id} is completed`)
+            clearInterval(updateOrderStatusInterval)
+        } else {
+            logger.error(`Order: ${order._id} doesnt update state`)
+        }
+    } catch (err) {
+        logger.error("SERVER ERROR", err)
     }
+
 }
 
 module.exports = {
