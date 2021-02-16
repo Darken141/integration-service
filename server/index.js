@@ -3,7 +3,7 @@ const express = require('express')
 require('dotenv').config()
 
 // DB connection
-require('./utils/DBconfig')
+require('./config/DBconfig')
 
 // DB watchers
 require('./watcher/order.watcher')
