@@ -1,5 +1,6 @@
 const fetch = require('node-fetch')
 const Order = require('../models/orders')
+const logger = require('../config/winston-logger')
 const {
     getConsoleLog,
     getBase64Hash
@@ -19,13 +20,12 @@ const getOrderStatus = async (orderId, checkOrderStatusInterval) => {
 
     if(response.status === 200) {
         const orderState = await response.json()
-        console.count(`Count for ${orderId}`)
-        getConsoleLog(orderState, "STATUS")
+        logger.info(orderState)
 
         // When order is done, update status in database
         if(orderState.State === 'Finished') {
             await Order.updateOne({ _id: orderState.OrderID}, {status: "Finished"})
-            getConsoleLog(`order ${orderState.OrderID} is finished`, "FINISHED")
+            logger.info(`Order: ${orderState.OrderID} is finished`)
             clearInterval(checkOrderStatusInterval)
         }
     }
@@ -46,8 +46,6 @@ const postOrder = async (order, missingProperties) => {
     // Send Order
     const response = await fetch(`${process.env.OP_TIGER_API_ENDPOINT}/api/orders`, requestOptions)
 
-    getConsoleLog(response.status, "POST /api/orders")
-
     // Is everything oK?
     if(response.status === 200) {
         await Order.updateOne({ _id: order._id}, {
@@ -55,14 +53,14 @@ const postOrder = async (order, missingProperties) => {
             orderData: order.orderData,
             missingProperties: missingProperties,
         })
-        getConsoleLog(`order ${order._id} is sended`, "SUCCESS")
+        logger.info(`Order: ${order._id} is sended`)
     } else {
         await Order.updateOne({ _id: order._id}, { 
             status: "pending",
             missingProperties: missingProperties,
             orderData: order.orderData
         })
-        getConsoleLog(`order ${order._id} failed`, "FAILED")
+        logger.info(`Order: ${order._id} failed`)
     }
 }
 
@@ -82,15 +80,13 @@ const patchOrder = async (order, status, updateOrderStatusInterval) => {
 
     const response = await fetch(`${process.env.PARTNER_API_ENDPOINT}/api/orders/${order.orderID}`, requestOptions)
 
-    console.count(`Count for ${order._id}`)
-
-    getConsoleLog(response.status, `REQUEST PATCH /api/orders/${order.orderID}`)
-
     // Update status when order state is successuly sended
     if(response.status === 200) {
         await Order.updateOne({ _id: order._id}, {status: "Completed"})
-        getConsoleLog(`Order ${order._id} is completed`, "COMPLETED")
+        logger.info(`Order ${order._id} is completed`)
         clearInterval(updateOrderStatusInterval)
+    } else {
+        logger.error(`Order: ${order._id} doesnt update state`)
     }
 }
 

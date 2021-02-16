@@ -16,7 +16,9 @@
     "iso-country-codes": "^0.0.5",
     "mongoose": "^5.11.15",
     "node-fetch": "^2.6.1",
-    "string-similarity": "^4.0.4"
+    "string-similarity": "^4.0.4",
+    "winston": "^3.3.3",
+    "winston-mongodb": "^5.0.7"
   },
   "devDependencies": {
     "nodemon": "^2.0.7"

@@ -1,6 +1,7 @@
 const Order = require('../models/orders')
 const CarrierCode = require('../models/carrier-code')
 const stringSimilarity = require('string-similarity')
+const logger = require('../config/winston-logger')
 const {codes} = require('iso-country-codes')
 
 const {
@@ -18,7 +19,7 @@ const {
 Order.watch().on("change", async (data) => {
     // New order come
     if(data.operationType === 'insert') {
-        getConsoleLog('Get new order', "INSERT")
+        logger.info("Get new order")
         const {carrierCodes} = await CarrierCode.findOne()
         // Parse data from database
         const orderData = JSON.parse(data.fullDocument.originalOrderData)
@@ -34,7 +35,7 @@ Order.watch().on("change", async (data) => {
         const missingProperties = checkOrderValidity(orderToSend)
 
         if(missingProperties.length > 0) {
-            getConsoleLog(missingProperties, "Missing required properties")
+            logger.error("Missing required properties", ermissingPropertiesr)
         }
 
         try {
@@ -43,15 +44,16 @@ Order.watch().on("change", async (data) => {
                 orderData: orderToSend,
                 missingProperties: missingProperties,
             })
-            getConsoleLog(`Order ${data.fullDocument._id}`, "UPDATED")
+            logger.info(`Order ${data.fullDocument._id} UPDATED`)
+
         } catch (err) {
-            getConsoleLog(err, "SERVER ERROR")
+            logger.error("SERVER ERROR", err)
         }
     }
 
     if(data.operationType === 'update') {
         const orderId = data.documentKey._id
-        getConsoleLog(`Proccessing updated order: ${orderId} with status: ${data.updateDescription.updatedFields.status}`, "UPDATE")
+        logger.info(`Proccessing updated order: ${orderId} with status: ${data.updateDescription.updatedFields.status}`)
 
         // If order is send, check status
         if(data.updateDescription.updatedFields.status === 'sended') {
@@ -62,7 +64,7 @@ Order.watch().on("change", async (data) => {
                     getOrderStatus(orderId, checkOrderStatus)
                 }, 60000)
             } catch (err) {
-                getConsoleLog(err, "SERVER ERROR")
+                logger.error("SERVER ERROR", err)
             }
         }
 
@@ -75,13 +77,13 @@ Order.watch().on("change", async (data) => {
                 const missingProperties = checkOrderValidity(order.orderData)
 
                 if(missingProperties.length > 0) {
-                    getConsoleLog(missingProperties, "Missing required properties")
+                    logger.error("Missing required properties", ermissingPropertiesr)
                 }
 
                 postOrder(order, missingProperties)
 
             } catch (err) {
-                getConsoleLog(err, "SERVER ERROR")
+                logger.error("SERVER ERROR", err)
             }
         }
 
@@ -97,7 +99,7 @@ Order.watch().on("change", async (data) => {
                 }, 60000)
 
             } catch (err) {
-                getConsoleLog(err, "SERVER ERROR")
+                logger.error("SERVER ERROR", err)
             }
         }
     }

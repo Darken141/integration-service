@@ -115,15 +115,8 @@ const checkOrderValidity = (order) => {
     return resultArr
 }
 
-const getConsoleLog = (log, action) => {
-    console.log(`----------${action}----------`)
-    console.log(log)
-    console.log(`----------End of ${action}----------`)
-}
-
 module.exports = {
     formatOrder,
-    getConsoleLog,
     getBase64Hash,
     checkOrderValidity,
     carrierCodes,
