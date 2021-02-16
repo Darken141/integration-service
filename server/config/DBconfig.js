@@ -3,7 +3,7 @@ const CarrierCode = require('../models/carrier-code')
 const Order = require('../models/orders')
 const logger = require('../config/winston-logger')
 const {carrierCodes, formatOrder, checkOrderValidity} = require('../utils/utils')
-const {patchOrder, getOrderStatus} = require('../api/api')
+const {patchOrder, getOrderStatus, postOrder} = require('../api/api')
 const {codes} = require('iso-country-codes')
 const stringSimilarity = require('string-similarity')
 
@@ -30,6 +30,7 @@ db.on('open', async () => {
         // Check how many of them are incomplete 
         const recievedOrders = orders.filter(order => order.status === 'recieved')
         const pendingOrders = orders.filter(order => order.status === 'pending')
+        const updatedOrders = orders.filter(order => order.status === 'updated')
         const finishedOrders = orders.filter(order => order.status === 'Finished')
         const sendedOrders = orders.filter(order => order.status === 'sended')
 
@@ -71,6 +72,19 @@ db.on('open', async () => {
                     missingProperties: missingProperties,
                 })
                 logger.info(`Order ${order._id} UPDATED`)
+            })
+        }
+
+        if(updatedOrders.length > 0) {
+            updatedOrders.forEach(order => {
+                // Check if have all required properties
+                const missingProperties = checkOrderValidity(order.orderData)
+
+                if(missingProperties.length > 0) {
+                    logger.error("Missing required properties", ermissingPropertiesr)
+                }
+
+                postOrder(order, missingProperties)
             })
         }
 
