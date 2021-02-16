@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "build-container": "docker build -t eu.gcr.io/portfolio-297902/integration-service:latest .",
+    "push-container": "docker push eu.gcr.io/portfolio-297902/integration-service:latest",
+    "build-and-push": "npm run build-container && npm run push-container"
   },
   "keywords": [],
   "author": "",
