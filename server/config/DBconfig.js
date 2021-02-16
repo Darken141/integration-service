@@ -44,8 +44,9 @@ db.on('open', async () => {
 
 
         if(recievedOrders.length > 0) {
+            
             // Get order status every minute
-            recievedOrders.forEach(order => {
+            recievedOrders.forEach(async(order) => {
                 const {carrierCodes} = await CarrierCode.findOne()
                 // Parse data from database
                 const orderData = JSON.parse(order.originalOrderData)
